@@ -1,0 +1,30 @@
+FROM node:16
+
+WORKDIR /app
+
+RUN mkdir -p /app/storefront
+
+WORKDIR /app/storefront
+
+COPY ./medusa .
+
+
+RUN rm -rf node_modules
+
+RUN apt-get update
+
+RUN npm install -g npm@latest
+
+RUN npm install sharp
+
+RUN npm install --loglevel=error
+
+RUN mkdir -p /app/storefront_build
+
+COPY ./medusa /app/storefront_build
+
+RUN cp -r /app/storefront_build/. /app/storefront
+
+# CMD ["ls", "-la", "/app/storefront"]
+# CMD ["ls", "-la", "/app"]
+ENTRYPOINT ["yarn", "dev" ]

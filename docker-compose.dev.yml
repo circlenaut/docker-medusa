@@ -1,0 +1,117 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    image: backend:test
+    container_name: medusa-server
+    ports:
+      - "9090:9000"
+    networks:
+      - backend
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - 'medusa_data:/app/medusa_build'
+      - 'medusa_storefront:/app/storefront_build'
+      - 'medusa_admin:/app/medusa-admin_build'
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/medusa-docker
+      REDIS_URL: redis://cache
+      NODE_ENV: development
+      STORE_CORS: http://localhost:8080
+      ADMIN_CORS: http://localhost:7070
+      JWT_SECRET: some_jwt_secret
+      COOKIE_SECRET: some_cookie_secret
+      PORT: 9000
+    entrypoint: ./develop.sh develop
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    image: admin:test
+    ports:
+      - "7070:7000"
+    networks:
+      - backend
+    depends_on:
+      - backend
+    container_name: medusa-admin
+    volumes:
+      - 'medusa_admin:/app/medusa-admin_build'
+    environment:
+      MEDUSA_BACKEND_URL: http://localhost:9090
+      # NODE_OPTIONS: --openssl-legacy-provider
+    # command: yarn run seed
+
+  storefront:
+    build:
+      context: ./storefront
+      dockerfile: Dockerfile.dev
+    image: storefront:test
+    container_name: medusa-storefront
+    ports:
+      - "8080:8000"
+    networks:
+      - backend
+    volumes:
+      - 'medusa_storefront:/app/storefront_build'
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: http://localhost:9090
+      NEXT_PUBLIC_STRIPE_KEY:
+      NEXT_PUBLIC_PAYPAL_CLIENT_ID:
+      NEXT_PUBLIC_SEARCH_APP_ID:
+      NEXT_PUBLIC_SEARCH_ENDPOINT: http://127.0.0.1:7700
+      NEXT_PUBLIC_SEARCH_API_KEY:
+      NEXT_PUBLIC_SEARCH_INDEX_NAME:products:
+    # command: yarn dev
+
+  postgres:
+    image: postgres:10.4
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medusa-docker
+
+  redis:
+    image: redis
+    container_name: cache
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  minio:
+    image: docker.io/bitnami/minio:2023
+    ports:
+      # - '9000:9000'
+      - '9001:9001'
+    networks:
+      - backend
+    volumes:
+      - 'minio_data:/data'
+
+volumes:
+  medusa_data:
+    driver: local
+  medusa_admin:
+    driver: local
+  medusa_storefront:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  frontend:
+  backend:

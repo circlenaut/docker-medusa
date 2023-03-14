@@ -1,0 +1,30 @@
+FROM node:16
+
+WORKDIR /app
+
+RUN mkdir -p /app/medusa-admin
+
+WORKDIR /app/medusa-admin
+
+COPY ./medusa-admin .
+
+RUN rm -rf node_modules
+
+RUN apt-get update
+
+RUN npm install -g npm@latest
+
+RUN npm install sharp
+
+RUN npm install --loglevel=error
+
+RUN npm run build &> /dev/null
+
+RUN mkdir -p /app/medusa-admin_build
+
+COPY ./medusa-admin /app/medusa-admin_build
+
+RUN cp -r /app/medusa-admin_build/. /app/medusa-admin
+
+# CMD ["ls", "-la", "/app"]
+CMD [ "yarn", "dev" ]

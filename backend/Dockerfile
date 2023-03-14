@@ -1,8 +1,8 @@
-FROM node:17.1.0
+FROM node:latest
 
 WORKDIR /app/medusa
 
-COPY package.json .
+COPY ./package.json .
 
 RUN apt-get update
 

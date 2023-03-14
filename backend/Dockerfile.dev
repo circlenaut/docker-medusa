@@ -1,0 +1,27 @@
+FROM node:17.1.0
+
+WORKDIR /app
+
+RUN mkdir -p /app/medusa
+
+WORKDIR /app/medusa
+
+COPY medusa/package.json .
+COPY medusa/develop.sh .
+COPY medusa/yarn.* .
+
+RUN rm -rf node_modules
+
+RUN apt-get update
+
+RUN apt-get install -y python
+
+RUN npm install -g npm@8.1.2
+
+RUN npm install -g @medusajs/medusa-cli@latest
+
+RUN npm install --loglevel=error
+
+COPY medusa/. .
+
+ENTRYPOINT ["./develop.sh"]
